@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Photo triage</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/common.css"/>
+</head>
+<body>
+    <h1>Photo triage</h1>
+    <section>
+        <h2>Upload pictures</h2>
+        <form name="uploadForm">
+            <input type="text" id="author" name="author" placeholder="Name" onchange="validateForm()">
+            <input id="uploadInput" type="file" name="myFiles" onchange="updateFileList();" class="hidden" multiple>
+            <button type="button" class="btn btn-primary" onclick="document.getElementById('uploadInput').click()">Choose pictures</button>
+            <button type="button" class="btn btn-primary" id="uploadButton" onclick="uploadPictures()" disabled="disabled">Upload pictures</button>
+        </form>
+        <div class="container hidden" id="selectAllNone">
+            <div class="col-sm-2 col-sm-offset-10">
+                Select <a href="#" onclick="selectAll()">all</a> / <a href="#" onclick="selectNone()">none</a>
+            </div>
+        </div>
+        <div class="container" id="selectedFiles"></div>
+    </section>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <script src="assets/js/index.js"></script>
+</body>
+</html>

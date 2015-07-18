@@ -1,0 +1,8 @@
+.thumbnail {
+    opacity: 0.5;
+}
+
+.thumbnail.selected {
+    opacity: 1;
+}
+
