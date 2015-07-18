@@ -1,7 +1,10 @@
+body {
+    padding-top: 60px;
+}
+
 .thumbnail {
     opacity: 0.5;
 }
-
 .thumbnail.selected {
     opacity: 1;
 }
