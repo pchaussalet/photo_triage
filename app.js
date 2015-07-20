@@ -1,10 +1,14 @@
+#!/usr/bin/env node
+
 var path = require('path'),
     Hapi = require('hapi'),
-    handlers = require('./handlers');
+    configuration = require('./configuration'),
+    handlers = require('./handlers'),
+    MB = 1024 * 1024;
 
 var server = new Hapi.Server();
 server.connection({
-    host: 'localhost',
+    host: '0.0.0.0',
     port: 9000,
     routes: {
         files: {
@@ -37,7 +41,7 @@ server.route({
     handler: handlers.upload,
     config: {
         payload: {
-            maxBytes: 30 * 1024 * 1024,
+            maxBytes: 500 * MB,
             parse: false,
             output: 'stream'
         }
@@ -68,7 +72,7 @@ server.route({
     },
     config: {
         files: {
-            relativeTo: '/tmp'
+            relativeTo: configuration.WORK_DIR
         }
     }
 });
@@ -77,6 +81,14 @@ server.route({
     method: 'POST',
     path: '/selection',
     handler: handlers.selection.post
+});
+
+server.route({
+    method: 'GET',
+    path: '/preview',
+    handler: {
+        file: 'preview.html'
+    }
 });
 
 server.start(function() {

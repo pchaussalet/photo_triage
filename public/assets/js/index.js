@@ -1,47 +1,64 @@
 var selectedPictures,
     uploadButton = document.getElementById('uploadButton'),
     authorInput = document.getElementById('author'),
-    selectAllNone = document.getElementById('selectAllNone');
+    selectAllNone = document.getElementById('selectAllNone'),
+    archiveType = 'application/zip';
 
 function updateFileList() {
-    var files = getImageFiles(),
-        list = document.getElementById('selectedFiles'),
+    var list = document.getElementById('selectedFiles'),
+        file,
         row,
-        hasImages = false;
-    list.innerHTML = '';
-    selectedPictures = [];
-    uploadButton.setAttribute('disabled', 'disabled');
-    selectAllNone.classList.add('hidden');
-    for (var i = 0; i < files.length; i++) {
-        if (i % 4 == 0) {
-            if (row) {
-                list.appendChild(row);
-            }
-            row = document.createElement('div');
-            row.classList.add('row');
-        }
-        var file = files[i];
-        hasImages = true;
-        var entry = document.createElement('div');
-        entry.classList.add('thumbnail');
+        entry;
+    if (isArchive()) {
+        file = document.getElementById('uploadInput').files[0];
+        row = document.createElement('div');
+        row.classList.add('row');
+        entry = document.createElement('div');
+        entry.setAttribute('style', 'text-align: center')
         entry.classList.add('col-sm-3');
         entry.id = file.name;
-
-        var img = document.createElement("img");
-        entry.appendChild(img);
-
-        var reader = new FileReader();
-        reader.onload = (function(aImg) { return function(e) { aImg.src = e.target.result; }; })(img);
-        reader.readAsDataURL(file);
-
-        entry.onclick = toggleSelection;
+        entry.innerHTML = '<span class="glyphicon glyphicon-file" style="font-size: xx-large" aria-hidden="true"></span><br>'+file.name;
+        selectedPictures = [file.name];
         row.appendChild(entry);
-    }
-    if (row) {
         list.appendChild(row);
-    }
-    if (hasImages) {
-        selectAllNone.classList.remove('hidden')
+    } else {
+        var files = getImageFiles(),
+            hasImages = false;
+        list.innerHTML = '';
+        selectedPictures = [];
+        uploadButton.setAttribute('disabled', 'disabled');
+        selectAllNone.classList.add('hidden');
+        for (var i = 0; i < files.length; i++) {
+            if (i % 4 == 0) {
+                if (row) {
+                    list.appendChild(row);
+                }
+                row = document.createElement('div');
+                row.classList.add('row');
+            }
+            file = files[i];
+            hasImages = true;
+            entry = document.createElement('div');
+            entry.classList.add('thumbnail');
+            entry.classList.add('col-sm-3');
+            entry.id = file.name;
+
+            var img = document.createElement("img");
+            entry.appendChild(img);
+
+            var reader = new FileReader();
+            reader.onload = (function(aImg) { return function(e) { aImg.src = e.target.result; }; })(img);
+            reader.readAsDataURL(file);
+
+            entry.onclick = toggleSelection;
+            row.appendChild(entry);
+        }
+        if (row) {
+            list.appendChild(row);
+        }
+        if (hasImages) {
+            selectAllNone.classList.remove('hidden')
+        }
     }
 }
 
@@ -83,11 +100,16 @@ function selectNone() {
 }
 
 function validateForm() {
-    if (selectedPictures.length == 0 || !authorInput.value) {
+    if (!selectedPictures || selectedPictures.length == 0 || !authorInput.value) {
         uploadButton.setAttribute('disabled', 'disabled');
     } else {
         uploadButton.removeAttribute('disabled');
     }
+}
+
+function isArchive() {
+    var files = document.getElementById('uploadInput').files;
+    return files.length == 1 && files[0].type == archiveType;
 }
 
 function getImageFiles() {
@@ -108,7 +130,7 @@ function getImageFiles() {
 }
 
 function uploadPictures() {
-    var files = getImageFiles(),
+    var files = isArchive() ? document.getElementById('uploadInput').files : getImageFiles(),
         author = authorInput.value;
 
     for (var i = 0; i < files.length; i++) {
@@ -121,10 +143,11 @@ function uploadPictures() {
 }
 
 function FileUpload(thumb, file, author) {
-    var reader = new FileReader(),
-        progress = document.createElement('div'),
+    var progress = document.createElement('div'),
         progressBar = document.createElement('div'),
         xhr = new XMLHttpRequest();
+
+    console.log('uploading file', file.name, file.type, file.size);
 
     progress.classList.add('progress');
     progressBar.classList.add('progress-bar');
@@ -140,10 +163,10 @@ function FileUpload(thumb, file, author) {
     thumb.appendChild(progress);
 
     this.progressBar = progressBar;
-    this.xhr = xhr;
 
     var self = this;
-    this.xhr.upload.addEventListener("progress", function(e) {
+    xhr.upload.addEventListener("progress", function(e) {
+        console.log('progress');
         if (e.lengthComputable) {
             var percentage = Math.round((e.loaded * 100) / e.total);
             self.progressBar.setProgress(percentage);
@@ -153,10 +176,8 @@ function FileUpload(thumb, file, author) {
     xhr.upload.addEventListener("load", function(e){
         self.progressBar.setProgress(100);
     }, false);
+
     xhr.open("POST", "/upload/" + author + "/" + file.name);
     xhr.setRequestHeader('content-type', file.type);
-    reader.onload = function(evt) {
-        xhr.send(evt.target.result);
-    };
-    reader.readAsArrayBuffer(file);
+    xhr.send(file);
 }

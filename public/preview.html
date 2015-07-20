@@ -22,25 +22,19 @@
             <div id="navbar" class="collapse navbar-collapse">
                 <ul class="nav navbar-nav">
                     <li><a href="/">Transférer</a></li>
-                    <li class="active"><a href="/triage">Sélectionner</a></li>
-                    <li><a href="/preview">Visualiser</a></li>
+                    <li><a href="/triage">Sélectionner</a></li>
+                    <li class="active"><a href="/preview">Visualiser</a></li>
                 </ul>
             </div><!--/.nav-collapse -->
         </div>
     </nav>
 
     <section>
-        <h2>Sélectionner</h2>
-        <button class="btn btn-primary" id="createList" onclick="selectPictures()">Valider la sélection</button>
-        <div class="container hidden" id="selectAllNone">
-            <div class="col-sm-3 col-sm-offset-9">
-                Sélectionner <a href="#" onclick="selectAll()">toutes</a> / <a href="#" onclick="selectNone()">aucune</a>
-            </div>
-        </div>
+        <h2>Visualiser</h2>
         <div class="container-fluid" id="images"></div>
     </section>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
-    <script src="assets/js/triage.js"></script>
+    <script src="assets/js/preview.js"></script>
 </body>
 </html>

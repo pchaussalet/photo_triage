@@ -9,8 +9,10 @@
   "author": "Pierre Chaussalet <pchaussalet@gmail.com>",
   "license": "ISC",
   "dependencies": {
+    "decompress": "^2.3.0",
     "hapi": "^8.8.0",
     "nedb": "^1.1.2",
-    "slugs": "^0.1.3"
+    "slugs": "^0.1.3",
+    "sharp": "^0.11.0"
   }
 }
