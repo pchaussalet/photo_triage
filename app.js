@@ -4,7 +4,8 @@ var path = require('path'),
     Hapi = require('hapi'),
     configuration = require('./configuration'),
     handlers = require('./handlers'),
-    MB = 1024 * 1024;
+    MB = 1024 * 1024,
+    HOURS = 1000 * 60;
 
 var server = new Hapi.Server();
 server.connection({
@@ -73,6 +74,9 @@ server.route({
     config: {
         files: {
             relativeTo: configuration.WORK_DIR
+        },
+        cache: {
+            expiresIn: 24 * HOURS
         }
     }
 });
