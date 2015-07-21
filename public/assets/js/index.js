@@ -2,7 +2,9 @@ var selectedPictures,
     uploadButton = document.getElementById('uploadButton'),
     authorInput = document.getElementById('author'),
     selectAllNone = document.getElementById('selectAllNone'),
-    archiveType = 'application/zip';
+    archiveType = 'application/zip',
+    loading = $('#loading'),
+    isLoading = false;
 
 function updateFileList() {
     var list = document.getElementById('selectedFiles'),
@@ -23,7 +25,10 @@ function updateFileList() {
         list.appendChild(row);
     } else {
         var files = getImageFiles(),
-            hasImages = false;
+            hasImages = false,
+            imageLoadTasks = [],
+            rowPos = -1;
+        loading.show();
         list.innerHTML = '';
         selectedPictures = [];
         uploadButton.setAttribute('disabled', 'disabled');
@@ -35,6 +40,7 @@ function updateFileList() {
                 }
                 row = document.createElement('div');
                 row.classList.add('row');
+                rowPos++;
             }
             file = files[i];
             hasImages = true;
@@ -46,9 +52,7 @@ function updateFileList() {
             var img = document.createElement("img");
             entry.appendChild(img);
 
-            var reader = new FileReader();
-            reader.onload = (function(aImg) { return function(e) { aImg.src = e.target.result; }; })(img);
-            reader.readAsDataURL(file);
+            imageLoadTasks.push(createLoadingTask(img, file, rowPos < 5));
 
             entry.onclick = toggleSelection;
             row.appendChild(entry);
@@ -56,9 +60,54 @@ function updateFileList() {
         if (row) {
             list.appendChild(row);
         }
+        async.parallelLimit(imageLoadTasks, 4, function(error, results) {
+            $(document).on('scroll', loadDisplayedImages);
+            loading.hide();
+        });
         if (hasImages) {
             selectAllNone.classList.remove('hidden')
         }
+    }
+}
+
+function createLoadingTask(img, file, show) {
+    return function(callback) {
+        var reader = new FileReader();
+        reader.onload = (function(aImg) {
+            return function(e) {
+                var attributeName = show ? 'src' : '_src';
+                aImg.setAttribute(attributeName, e.target.result);
+                callback(null, file.name);
+            };
+        })(img);
+        reader.readAsDataURL(file);
+    }
+}
+
+function loadDisplayedImages() {
+    if (!isLoading) {
+        isLoading = true;
+        var list = document.getElementById('selectedFiles'),
+            bottomPosition = window.scrollY + window.innerHeight;
+        for (var i = 0; i < list.childNodes.length; i++) {
+            var rows = [list.childNodes[i]];
+            if (rows[0].getBoundingClientRect().top - 100 < bottomPosition) {
+                if (i+1 < list.childNodes.length) {
+                    rows.push(list.childNodes[i+1]);
+                }
+                for (var j = 0; j < rows.length; j++) {
+                    var row = rows[j];
+                    for (var k = 0; k < row.childNodes.length; k++) {
+                        var entry = row.childNodes[k];
+                        if (entry.firstElementChild.hasAttribute('_src')) {
+                            entry.firstElementChild.src = entry.firstElementChild.getAttribute('_src');
+                            entry.firstElementChild.removeAttribute('_src');
+                        }
+                    }
+                }
+            }
+        }
+        isLoading = false;
     }
 }
 
@@ -131,18 +180,29 @@ function getImageFiles() {
 
 function uploadPictures() {
     var files = isArchive() ? document.getElementById('uploadInput').files : getImageFiles(),
-        author = authorInput.value;
+        author = authorInput.value,
+        uploadTasks = [];
 
+    loading.show();
     for (var i = 0; i < files.length; i++) {
         var file = files[i],
             thumb = document.getElementById(file.name);
         if (selectedPictures.indexOf(file.name) != -1) {
-            new FileUpload(thumb, file, author);
+            uploadTasks.push(createUpladTask(thumb, file, author))
         }
+    }
+    async.parallelLimit(uploadTasks, 2, function() {
+        loading.hide();
+    })
+}
+
+function createUpladTask(thumb, file, author) {
+    return function(callback) {
+        new FileUpload(thumb, file, author, callback);
     }
 }
 
-function FileUpload(thumb, file, author) {
+function FileUpload(thumb, file, author, callback) {
     var progress = document.createElement('div'),
         progressBar = document.createElement('div'),
         xhr = new XMLHttpRequest();
@@ -166,7 +226,6 @@ function FileUpload(thumb, file, author) {
 
     var self = this;
     xhr.upload.addEventListener("progress", function(e) {
-        console.log('progress');
         if (e.lengthComputable) {
             var percentage = Math.round((e.loaded * 100) / e.total);
             self.progressBar.setProgress(percentage);
@@ -175,6 +234,7 @@ function FileUpload(thumb, file, author) {
 
     xhr.upload.addEventListener("load", function(e){
         self.progressBar.setProgress(100);
+        callback(null, file.name);
     }, false);
 
     xhr.open("POST", "/upload/" + author + "/" + file.name);
