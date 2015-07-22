@@ -2,10 +2,21 @@ body {
     padding-top: 60px;
 }
 
-.thumbnail {
+.thumbnail img {
     opacity: 0.5;
 }
-.thumbnail.selected {
+.thumbnail img.selected {
     opacity: 1;
 }
 
+.toolbar {
+    text-align: center;
+}
+
+.toolbar a {
+    padding: 0 0.5em;
+}
+
+.toolbar a span {
+    font-size: large;
+}

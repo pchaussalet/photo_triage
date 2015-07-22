@@ -30,19 +30,47 @@ function loadImages() {
                 entry.classList.add('thumbnail');
                 entry.classList.add('col-sm-3');
                 entry.id = image._id;
-                if (image.selected) {
-                    entry.classList.add('selected');
-                    selectedPictures.push(image._id);
-                }
-                entry.onclick = toggleSelection;
-
 
                 var img = document.createElement("img");
                 img.setAttribute('_src', image.url);
                 if (rowPos < 5) {
                     img.src = image.url;
                 }
+                img.onclick = toggleSelection;
+                if (image.selected) {
+                    img.classList.add('selected');
+                    selectedPictures.push(image._id);
+                }
                 entry.appendChild(img);
+
+                var toolbar = document.createElement('div');
+                toolbar.classList.add('toolbar');
+
+                var download = document.createElement('a');
+                download.setAttribute('href', image.fullSize || image.url.replace('/t_', '/'));
+                download.setAttribute('alt', 'Télécharger');
+                download.setAttribute('target', '_blank');
+                var downloadIcon = document.createElement('span');
+                downloadIcon.classList.add('glyphicon');
+                downloadIcon.classList.add('glyphicon-download');
+                download.appendChild(downloadIcon);
+                toolbar.appendChild(download);
+
+                var select = document.createElement('a');
+                select.setAttribute('href', '#');
+                var selectIcon = document.createElement('span');
+                selectIcon.id = 'icon' + image._id;
+                selectIcon.classList.add('glyphicon');
+                selectIcon.classList.add(image.selected ? 'glyphicon-check' : 'glyphicon-unchecked');
+                select.appendChild(selectIcon);
+                select.onclick = (function(thumb) {
+                    return function() {
+                        toggleSelection(thumb);
+                    }
+                })(entry);
+                toolbar.appendChild(select);
+
+                entry.appendChild(toolbar);
 
                 row.appendChild(entry);
             }
@@ -73,15 +101,21 @@ function loadDisplayedImages() {
 }
 
 function toggleSelection(thumb) {
-    thumb = thumb.target ? this : thumb;
+    thumb = thumb.target ? this.parentElement : thumb;
+    var picture = thumb.firstElementChild,
+        icon = document.getElementById('icon' + thumb.id);
     if (thumb.id) {
         var pictureIndex = selectedPictures.indexOf(thumb.id);
         if (pictureIndex == -1) {
             selectedPictures.push(thumb.id);
-            thumb.classList.add('selected');
+            picture.classList.add('selected');
+            icon.classList.remove('glyphicon-unchecked');
+            icon.classList.add('glyphicon-check');
         } else {
             selectedPictures.splice(pictureIndex, 1);
-            thumb.classList.remove('selected');
+            picture.classList.remove('selected');
+            icon.classList.remove('glyphicon-check');
+            icon.classList.add('glyphicon-unchecked');
         }
     }
     validateForm();
