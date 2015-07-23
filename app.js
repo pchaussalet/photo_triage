@@ -5,7 +5,8 @@ var path = require('path'),
     configuration = require('./configuration'),
     handlers = require('./handlers'),
     MB = 1024 * 1024,
-    HOURS = 1000 * 60;
+    HOURS = 1000 * 60,
+    DAYS = 24 * HOURS;
 
 var server = new Hapi.Server();
 server.connection({
@@ -25,6 +26,11 @@ server.route({
         directory: {
             path: 'assets'
         }
+    },
+    config: {
+        cache: {
+            expiresIn: 24 * HOURS
+        }
     }
 });
 
@@ -33,6 +39,11 @@ server.route({
     path:'/',
     handler: {
         file: 'index.html'
+    },
+    config: {
+        cache: {
+            expiresIn: 24 * HOURS
+        }
     }
 });
 
@@ -54,6 +65,11 @@ server.route({
     path: '/triage',
     handler: {
         file: 'triage.html'
+    },
+    config: {
+        cache: {
+            expiresIn: 24 * HOURS
+        }
     }
 });
 
@@ -76,7 +92,7 @@ server.route({
             relativeTo: configuration.WORK_DIR
         },
         cache: {
-            expiresIn: 24 * HOURS
+            expiresIn: 5 * DAYS
         }
     }
 });
@@ -92,6 +108,11 @@ server.route({
     path: '/preview',
     handler: {
         file: 'preview.html'
+    },
+    config: {
+        cache: {
+            expiresIn: 24 * HOURS
+        }
     }
 });
 
