@@ -16,6 +16,12 @@ var createEntry = function (image, rowPos) {
         img.src = image.url;
     }
     entry.appendChild(img);
+
+    var likes = document.createElement('div');
+    likes.classList.add('likesOverlay');
+    likes.innerHTML = image.likes;
+    entry.appendChild(likes);
+
     return entry;
 };
 
@@ -26,9 +32,10 @@ function loadImages() {
         var row,
             rowPos = -1,
             imagesCount = 0;
+        images = images.filter(function(x) { return !!x.likes; }).sort(imageSorter);
         for (var i = 0; i < images.length; i++) {
             var image = images[i];
-            if (image.selected) {
+            if (image.likes) {
                 if (imagesCount++ % 4 == 0) {
                     if (row) {
                         list.appendChild(row);
@@ -62,4 +69,17 @@ function loadDisplayedImages() {
             }
         }
     }
+}
+
+function imageSorter(imageA, imageB) {
+    if (imageA.likes == imageB.likes) {
+        if (imageA.timestamp == imageB.timestamp) {
+            if (imageA._id == imageB._id) {
+                return 0;
+            }
+            return imageA._id > imageB._id ? 1 : -1;
+        }
+        return imageA.timestamp > imageB.timestamp ? 1 : -1;
+    }
+    return imageA.likes > imageB.likes ? -1 : 1;
 }

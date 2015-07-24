@@ -2,21 +2,62 @@ body {
     padding-top: 60px;
 }
 
+.row {
+    display: flex;
+    padding-bottom: 20px;
+}
+
+.pictureCell {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 5px;
+}
+
+.pictureCell img {
+    max-width: 100%;
+    width: 100%;
+}
+
 .thumbnail img {
     opacity: 0.5;
 }
-.thumbnail img.selected {
+
+.thumbnail img.selected, .thumbnail.selected img {
     opacity: 1;
 }
 
 .toolbar {
     text-align: center;
+    border: 1px solid #ddd;
+    border-radius: 4px;
 }
 
-.toolbar a {
-    padding: 0 0.5em;
+.toolbar * {
+    vertical-align: middle;
 }
 
 .toolbar a span {
     font-size: large;
+}
+
+input.form-control.likesCounter {
+    width: 2em;
+    padding: 0;
+    text-align: center;
+}
+
+.likesOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-size: 3em;
+    background-color: rgba(0, 0, 0, 0.25);
+    padding: 0.5em;
+    line-height: 1em;
+    margin: 4px;
+    border-radius: 0.5em;
+    color: rgba(255, 255, 255, 0.75);
 }

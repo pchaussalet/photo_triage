@@ -99,7 +99,7 @@ server.route({
 
 server.route({
     method: 'POST',
-    path: '/selection',
+    path: '/like/{pictureId}',
     handler: handlers.selection.post
 });
 

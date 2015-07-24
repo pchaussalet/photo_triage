@@ -3,6 +3,7 @@ var path = require('path'),
     slugs = require('slugs'),
     Decompress = require('decompress'),
     sharp = require('sharp'),
+    exifReader = require('exif-reader'),
     configuration = require('../configuration'),
     db = require('../lib/repository');
 
@@ -101,17 +102,46 @@ function recurseRmdir(dir) {
     fs.rmdirSync(dir);
 }
 
+function extractImageTimestamp(metadata) {
+    var timestamp = Date.now();
+    if (metadata.exif) {
+        var parsedMetadata = exifReader(metadata.exif);
+        if (parsedMetadata) {
+            if (parsedMetadata.exif && (parsedMetadata.exif.DateTimeOriginal || parsedMetadata.exif.DateTimeDigitized)) {
+                var exif = parsedMetadata.exif;
+                if (exif.DateTimeOriginal) {
+                    timestamp = exif.DateTimeOriginal.getTime();
+                } else {
+                    timestamp = exif.DateTimeDigitized.getTime();
+                }
+            } else {
+                if (parsedMetadata.image && parsedMetadata.image.ModifyDate) {
+                    timestamp = parsedMetadata.image.ModifyDate.getTime();
+                }
+            }
+        }
+    }
+    return timestamp;
+}
+
 function addUploadedImage(filepath, author, filename, sluggished, callback) {
-    sharp(filepath)
-        .resize(1024, 1024)
-        .max()
-        .toFile(filepath.replace(sluggished.filename, 't_'+ sluggished.filename))
-        .then(function() {
-            db.save({
-                author: author,
-                filename: filename,
-                url: '/pictures/' + sluggished.author + '/t_' + sluggished.filename,
-                filepath: filepath
-            }, callback);
+    var image = sharp(filepath),
+        doc = {
+            author: author,
+            filename: filename,
+            fullSize: '/pictures/' + sluggished.author + '/' + sluggished.filename,
+            url: '/pictures/' + sluggished.author + '/t_' + sluggished.filename,
+            filepath: filepath
+        };
+    image
+        .metadata()
+        .then(function(metadata) {
+            doc.timestamp = extractImageTimestamp(metadata);
+            image.resize(1024, 1024)
+                .max()
+                .toFile(filepath.replace(sluggished.filename, 't_'+ sluggished.filename))
+                .then(function() {
+                    db.save(doc, callback);
+                });
         });
 }

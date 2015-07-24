@@ -1,160 +1,141 @@
-var selectedPictures,
-    pictures,
-    createListButton = document.getElementById('createList'),
-    selectAllNone = document.getElementById('selectAllNone');
-
 $(loadImages);
 
 function loadImages() {
-    var list = document.getElementById('images');
-    selectedPictures = [];
-    createListButton.setAttribute('disabled', 'disabled');
+    var i,
+        list = $('#images');
     $.getJSON('/images', function(images) {
-        list.innerHTML = '';
-        pictures = images;
+        images.sort(imageSorter);
+        list.empty();
         if (images.length > 0) {
             var row,
                 rowPos = -1;
-            selectAllNone.classList.remove('hidden');
-            for (var i = 0; i < images.length; i++) {
+            for (i = 0; i < images.length; i++) {
                 var image = images[i];
                 if (i % 4 == 0) {
                     if (row) {
-                        list.appendChild(row);
+                        list.append(row);
                     }
-                    row = document.createElement('div');
-                    row.classList.add('row');
-                    rowPos++;
+                    row = $('<div>')
+                        .addClass('row')
+                        .attr('id', 'row' + ++rowPos);
                 }
-                var entry = document.createElement('div');
-                entry.classList.add('thumbnail');
-                entry.classList.add('col-sm-3');
-                entry.id = image._id;
+                var entry = $('<div>')
+                    .addClass('pictureCell')
+                    .addClass('col-sm-3')
+                    .attr('id', image._id);
 
-                var img = document.createElement("img");
-                img.setAttribute('_src', image.url);
-                if (rowPos < 5) {
-                    img.src = image.url;
-                }
-                img.onclick = toggleSelection;
-                if (image.selected) {
-                    img.classList.add('selected');
-                    selectedPictures.push(image._id);
-                }
-                entry.appendChild(img);
+                entry.append($('<img>')
+                    .attr('_src', image.url)
+                    .addClass('thumbnail')
+                    .addClass('selected')
+                );
 
-                var toolbar = document.createElement('div');
-                toolbar.classList.add('toolbar');
+                var toolbar = $('<div>')
+                    .addClass('toolbar')
+                    .addClass('form-inline');
 
-                var download = document.createElement('a');
-                download.setAttribute('href', image.fullSize || image.url.replace('/t_', '/'));
-                download.setAttribute('alt', 'Télécharger');
-                download.setAttribute('target', '_blank');
-                var downloadIcon = document.createElement('span');
-                downloadIcon.classList.add('glyphicon');
-                downloadIcon.classList.add('glyphicon-download');
-                download.appendChild(downloadIcon);
-                toolbar.appendChild(download);
+                var fullSizeUrl = getFullSizeUrl(image);
+                toolbar.append($('<a>')
+                    .attr('href', fullSizeUrl)
+                    .attr('download', fullSizeUrl.substr(1))
+                    .attr('target', '_blank')
+                    .attr('title', 'Télécharger l\'originale')
+                    .addClass('btn')
+                    .addClass('btn-default')
+                    .append($('<span>')
+                        .addClass('glyphicon')
+                        .addClass('glyphicon-download')
+                    )
+                );
 
-                var select = document.createElement('a');
-                select.setAttribute('href', '#');
-                var selectIcon = document.createElement('span');
-                selectIcon.id = 'icon' + image._id;
-                selectIcon.classList.add('glyphicon');
-                selectIcon.classList.add(image.selected ? 'glyphicon-check' : 'glyphicon-unchecked');
-                select.appendChild(selectIcon);
-                select.onclick = (function(thumb) {
-                    return function() {
-                        toggleSelection(thumb);
-                    }
-                })(entry);
-                toolbar.appendChild(select);
+                toolbar.append($('<button>')
+                    .addClass('btn')
+                    .addClass('btn-default')
+                    .click(likePicture)
+                    .attr('title', 'Voter pour cette photo')
+                    .append($('<span>')
+                        .attr('id', 'selectIcon-' + image._id)
+                        .addClass('glyphicon')
+                        .addClass('glyphicon-thumbs-up')
+                    )
+                );
 
-                entry.appendChild(toolbar);
+                toolbar.append($('<input>')
+                    .attr('type', 'text')
+                    .attr('id', 'likes-' + image._id)
+                    .val(image.likes || 0)
+                    .addClass('form-control')
+                    .addClass('likesCounter')
+                    .attr('readonly', '')
+                    .attr('maxlength', 2)
+                );
 
-                row.appendChild(entry);
+                entry.append(toolbar);
+
+                row.append(entry);
             }
             if (row) {
-                list.appendChild(row);
+                list.append(row);
             }
-            $(document).on('scroll', loadDisplayedImages);
-        } else {
-            selectAllNone.classList.add('hidden');
+            for (i = 0; i < 5; i++) {
+                loadRowImages(list.find('#row' + i));
+            }
+            $(document).scroll(loadDisplayedImages);
         }
     });
 }
 
+function getFullSizeUrl(image) {
+    return image.fullSize || image.url.replace('/t_', '/');
+}
+
+function loadRowImages(row) {
+    var rowImages = row.find('img');
+    rowImages.each(function () {
+        var image = $(this);
+        image.attr('src', image.attr('_src'));
+    });
+    return rowImages;
+}
+
 function loadDisplayedImages() {
-    var list = document.getElementById('images');
-    for (var i = 0; i < list.childNodes.length; i++) {
-        var row = list.childNodes[i];
-        for (var j = 0; j < row.childNodes.length; j++) {
-            var entry = row.childNodes[j];
-            if (i < 2) {
-                entry.firstElementChild.src = entry.firstElementChild.getAttribute('_src');
-            } else {
-                if (entry.getBoundingClientRect().top-100 < window.scrollY + window.innerHeight)
-                    entry.firstElementChild.src = entry.firstElementChild.getAttribute('_src');
+    $('.row').each(function(index, row) {
+        if (index >= 5) {
+            if (row.getBoundingClientRect().top - window.innerHeight <= window.innerHeight / 4) {
+                loadRowImages($(row));
             }
         }
-    }
+    });
 }
 
-function toggleSelection(thumb) {
-    thumb = thumb.target ? this.parentElement : thumb;
-    var picture = thumb.firstElementChild,
-        icon = document.getElementById('icon' + thumb.id);
-    if (thumb.id) {
-        var pictureIndex = selectedPictures.indexOf(thumb.id);
-        if (pictureIndex == -1) {
-            selectedPictures.push(thumb.id);
-            picture.classList.add('selected');
-            icon.classList.remove('glyphicon-unchecked');
-            icon.classList.add('glyphicon-check');
-        } else {
-            selectedPictures.splice(pictureIndex, 1);
-            picture.classList.remove('selected');
-            icon.classList.remove('glyphicon-check');
-            icon.classList.add('glyphicon-unchecked');
-        }
-    }
-    validateForm();
-}
-
-function selectAll() {
-    for (var i = 0; i < pictures.length; i++) {
-        var image = pictures[i],
-            elementId = image._id,
-            thumb = document.getElementById(elementId);
-        if (selectedPictures.indexOf(elementId) == -1) {
-            toggleSelection(thumb);
-        }
-    }
-}
-
-function selectNone() {
-    for (var i = 0; i < pictures.length; i++) {
-        var image = pictures[i],
-            elementId = image._id,
-            thumb = document.getElementById(elementId);
-        if (selectedPictures.indexOf(elementId) != -1) {
-            toggleSelection(thumb);
-        }
-    }
-}
-
-function validateForm() {
-    if (selectedPictures.length == 0) {
-        createListButton.setAttribute('disabled', 'disabled');
-    } else {
-        createListButton.removeAttribute('disabled');
-    }
-}
-
-function selectPictures() {
-    $.ajax('/selection', {
+function likePicture() {
+    var likeIcon = $(this),
+        pictureId = likeIcon.parents('.pictureCell').first().attr('id');
+    $.ajax('/like/' + pictureId, {
         type: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify(selectedPictures)
-    })
+        success: function() {
+            increaseLikes(pictureId);
+        }
+    });
+}
+
+function increaseLikes(pictureId) {
+    var likes = $('#likes-' + pictureId);
+    likes.val(parseInt(likes.val(), 10) + 1);
+    $('#selectIcon-' + pictureId)
+        .removeClass('glyphicon-thumbs-up')
+        .addClass('glyphicon-ok')
+        .parent()
+            .attr('disabled', '');
+}
+
+function imageSorter(imageA, imageB) {
+    if (imageA.timestamp == imageB.timestamp) {
+        if (imageA._id == imageB._id) {
+            return 0;
+        }
+        return imageA._id > imageB._id ? 1 : -1;
+    }
+    return imageA.timestamp > imageB.timestamp ? 1 : -1;
 }

@@ -9,10 +9,12 @@
   "author": "Pierre Chaussalet <pchaussalet@gmail.com>",
   "license": "ISC",
   "dependencies": {
+    "bluebird": "^2.9.34",
     "decompress": "^2.3.0",
+    "exif-reader": "^1.0.0",
     "hapi": "^8.8.0",
     "nedb": "^1.1.2",
-    "slugs": "^0.1.3",
-    "sharp": "^0.11.0"
+    "sharp": "^0.11.0",
+    "slugs": "^0.1.3"
   }
 }
